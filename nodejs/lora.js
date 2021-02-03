@@ -1,59 +1,75 @@
+/* eslint-disable promise/no-nesting */
+/* eslint-disable max-len */
+
 const RFM69 = require('rfm69radio');
 const rfm69 = new RFM69();
 
 rfm69.initialize({
-	address: 1,
-	encryptionKey : '0123456789abcdef',
-	isRFM69HW : true,
-	resetPin: 25,	// GPIO25 = 22
-	interruptPin:  22, // GPIO22 = 15
-	//verbose : true,
-	powerLevelPercent : 20,
+  address: 1,
+	encryptionKey: '0123456789abcdef',
+	resetPin : 25,
+	interruptPin : 22,
+	verbose : 1,
+	spiBus : 0,
+	spiDevice:1,
+  verbose: true,
+
+  powerLevelPercent: 20,
 })
-	.then(()=>{
-		console.log('Initialized');
-		rfm69.registerPacketReceivedCallback(cb1);
-		rfm69.registerPacketReceivedCallback(cb2);
-		return true;
-	})
-	.then(() => rfm69.readTemperature())
-	.then((temp) => {
-		console.log('Temp : ${temp}');
-		rfm69.calibrateRadio();
-		return true;
-	})
-	.then(() => {
-		setInterval(() => {
-			const toAddress = 2;
-			console.log('sending packet to address ${toAddress}');
-			rfm69.send({ toAddress:toAddress, payload: 'Hello ${timeStamp()}', attempts : 3, requireAck:true})
-				.then((packet) => {
-					console.log('Sent on attemp ${packet.attempts} after ${packet.ackTimestampe - packet.timestamp}ms');
-					return true;
-				})
-				.catch(err => console.log(err));
-		}, 3000);
-		
-		setTimeout(() => {
-			rfm69.broadcast('Broadcast!!!')
-				.then(() => {
-					console.log('Sent broadcast');
-					return true;
-				})
-				.catch(err => console.log(err));
-			}, 2000);
-			return true;
-	})
-	.catch(err => {
-		console.log(`Error initializing radio: ${err}`);
-		rfm69.shutdown();
-	});
+  .then(() => {
+    console.log('Initialized');
+    rfm69.registerPacketReceivedCallback(packetReceivedCallback1);
+    rfm69.registerPacketReceivedCallback(packetReceivedCallback2);
+    return true;
+  })
+  .then(() => rfm69.readTemperature())
+  .then((temp) => {
+    console.log(`Temp: ${temp}`);
+    rfm69.calibrateRadio();
+    return true;
+  })
+  .then(() => {
+    setInterval(() => {
+      const toAddress = 2;
+      console.log(`Sending packet to address ${toAddress}`);
+      rfm69.send({ toAddress: toAddress, payload: `Hello ${timeStamp()}`, attempts: 3, requireAck: true })
+        .then((packet) => {
+          console.log(`Sent on attempt ${packet.attempts} after ${packet.ackTimestamp - packet.timestamp}ms`);
+          return true;
+        })
+        .catch(err => console.log(err));
+    }, 3000);
+
+    setTimeout(() => {
+      rfm69.broadcast('Broadcast!!')
+        .then(() => {
+          console.log('Sent broadcast');
+          return true;
+        })
+        .catch(err => console.log(err));
+    }, 2000);
+    return true;
+  })
+  .catch(err => {
+    console.log(`Error initializing radio: ${err}`);
+    rfm69.shutdown();
+  });
 
 
-function cb1(packet){
-	console.log('Packet received (callback1) from peer ${packet.senderAddress} "${packet.payload}" RSSI:${packet.rssi}');
+function packetReceivedCallback1(packet) {
+  console.log(`Packet received (callback1) from peer ${packet.senderAddress} "${packet.payload}" RSSI:${packet.rssi}`);
+}
+function packetReceivedCallback2(packet) {
+  console.log(`Packet received (callback2) from peer ${packet.senderAddress} "${packet.payload}" RSSI:${packet.rssi}`);
 }
 
-function cb1(packet){
-	console.log('Packet received (callback1) from peer ${packet.senderAddress} "${packet.payload}" RSSI:${packet.rssi}');
+process.on('SIGINT', () => {
+  rfm69.shutdown();
+});
+
+function timeStamp() {
+  const m = new Date();
+  return ('0' + m.getUTCMinutes()).slice(-2) + ':' +
+    ('0' + m.getUTCSeconds()).slice(-2) + '.' +
+    m.getUTCMilliseconds();
 }
