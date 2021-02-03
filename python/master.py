@@ -52,11 +52,18 @@ prev_packet = None
 # on the transmitter and receiver (or be set to None to disable/the default).
 rfm69.encryption_key = b'\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08'
 
+
+# timer vars
+lastPing = time.time_ns()
+
 while True:
     packet = None
     # draw a box to clear the image
     display.fill(0)
     display.text('RasPi Radio', 35, 0, 1)
+
+    if time.time_ns() - lastPing > 1000 * 1000 * 1000:
+        print("ping sent!");
 
     # check for packet rx
     packet = rfm69.receive()

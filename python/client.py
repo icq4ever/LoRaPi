@@ -52,6 +52,11 @@ prev_packet = None
 # on the transmitter and receiver (or be set to None to disable/the default).
 rfm69.encryption_key = b'\x01\x02\x03\x04\x05\x06\x07\x08\x01\x02\x03\x04\x05\x06\x07\x08'
 
+# ID
+# 0 : master
+# 1 ... : client
+deviceID = 1
+
 while True:
     packet = None
     # draw a box to clear the image
@@ -70,6 +75,7 @@ while True:
         packet_text = str(prev_packet, "utf-8")
         display.text('RX: ', 0, 0, 1)
         display.text(packet_text, 25, 0, 1)
+        print(packet_text)
         time.sleep(1)
 
     if not btnA.value:
